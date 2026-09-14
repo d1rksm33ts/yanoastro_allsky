@@ -26,11 +26,14 @@ mariadb-dump \
 
 gzip -t "$temporary"
 mv "$temporary" "$final"
-sha256sum "$final" >"$final.sha256"
+(
+    cd "$backup_dir"
+    backup_name=$(basename "$final")
+    sha256sum "$backup_name" >"$backup_name.sha256"
+)
 
 find "$backup_dir" -type f \
     \( -name 'indi-allsky-*.sql.gz' -o -name 'indi-allsky-*.sql.gz.sha256' \) \
     -mtime "+$retention_days" -delete
 
 printf 'Created %s\n' "$final"
-
