@@ -48,6 +48,8 @@ services:
     # The pinned upstream entrypoint uses sudo for two ownership checks before
     # dropping back to the unprivileged allsky user. Keep this exception scoped
     # to the application container; it has no host ports or host devices.
+    security_opt:
+      - no-new-privileges:false
     logging:
       driver: local
       options:
