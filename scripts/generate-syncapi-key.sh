@@ -17,6 +17,7 @@ if [ -e "$target" ]; then
 fi
 
 output=$(docker exec "$container" \
+    /home/allsky/venv/bin/python \
     /home/allsky/indi-allsky/misc/usertool.py genapikey --username "$username")
 apikey=$(printf '%s\n' "$output" | sed -n 's/^API key: //p' | tail -n 1)
 
