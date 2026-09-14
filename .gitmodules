@@ -1,0 +1,3 @@
+[submodule "vendor/indi-allsky"]
+	path = vendor/indi-allsky
+	url = https://github.com/aaronwmorris/indi-allsky.git

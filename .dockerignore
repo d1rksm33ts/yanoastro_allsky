@@ -1,0 +1,10 @@
+*
+!deploy/
+!deploy/**
+!vendor/
+!vendor/indi-allsky/
+!vendor/indi-allsky/indi_allsky/
+!vendor/indi-allsky/indi_allsky/flask/
+!vendor/indi-allsky/indi_allsky/flask/static/
+!vendor/indi-allsky/indi_allsky/flask/static/**
+

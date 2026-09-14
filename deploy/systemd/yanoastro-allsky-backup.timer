@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily YaNoAstro AllSky MariaDB backup
+
+[Timer]
+OnCalendar=*-*-* 02:35:00 Europe/Brussels
+Persistent=true
+RandomizedDelaySec=10m
+
+[Install]
+WantedBy=timers.target
+

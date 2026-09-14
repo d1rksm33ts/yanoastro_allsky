@@ -1,0 +1,10 @@
+[Unit]
+Description=YaNoAstro AllSky MariaDB backup
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/yanoa/repositories/yanoastro_allsky
+ExecStart=/usr/bin/docker compose --profile operations run --rm backup
+

@@ -1,0 +1,115 @@
+name: yanoastro-allsky
+
+services:
+  mariadb.indi.allsky:
+    image: ${MARIADB_IMAGE:-mariadb:12.3.3-noble}
+    container_name: yanoastro-allsky-db
+    restart: unless-stopped
+    stop_grace_period: 60s
+    env_file:
+      - ${ALLSKY_SERVER_ENV_FILE:-./deploy/server.env.example}
+    volumes:
+      - ${YANOA_ROOT:-/srv/yanoa}/data/yanoastro_allsky/database:/var/lib/mysql
+    networks:
+      - data
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: local
+      options:
+        max-size: 20m
+        max-file: "5"
+
+  gunicorn.indi.allsky:
+    build:
+      context: ./vendor/indi-allsky
+      dockerfile: docker/Dockerfile.gunicorn
+      args:
+        TZ: ${TZ:-Europe/Brussels}
+    image: yanoastro-allsky-gunicorn:indi_v2026.09.01
+    container_name: yanoastro-allsky-app
+    restart: unless-stopped
+    env_file:
+      - ${ALLSKY_SERVER_ENV_FILE:-./deploy/server.env.example}
+    depends_on:
+      mariadb.indi.allsky:
+        condition: service_healthy
+    volumes:
+      - ${YANOA_ROOT:-/srv/yanoa}/data/yanoastro_allsky/images:/var/www/html/allsky
+      - ${YANOA_ROOT:-/srv/yanoa}/data/yanoastro_allsky/migrations:/var/lib/indi-allsky
+    networks:
+      - data
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: local
+      options:
+        max-size: 20m
+        max-file: "5"
+
+  web:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.web
+    image: yanoastro-allsky-web:indi_v2026.09.01
+    container_name: yanoastro-allsky-web
+    restart: unless-stopped
+    depends_on:
+      gunicorn.indi.allsky:
+        condition: service_started
+    volumes:
+      - ${YANOA_ROOT:-/srv/yanoa}/data/yanoastro_allsky/images:/var/www/html/allsky:ro
+    networks:
+      - edge
+      - data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: local
+      options:
+        max-size: 20m
+        max-file: "5"
+
+  backup:
+    image: ${MARIADB_IMAGE:-mariadb:12.3.3-noble}
+    profiles: [operations]
+    restart: "no"
+    env_file:
+      - ${ALLSKY_SERVER_ENV_FILE:-./deploy/server.env.example}
+    depends_on:
+      mariadb.indi.allsky:
+        condition: service_healthy
+    entrypoint: [/opt/yanoa/backup-mariadb.sh]
+    volumes:
+      - ./scripts/backup-mariadb.sh:/opt/yanoa/backup-mariadb.sh:ro
+      - ${YANOA_ROOT:-/srv/yanoa}/backups/yanoastro_allsky:/backups
+    networks:
+      - data
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "3"
+
+networks:
+  edge:
+    name: yanoa-edge
+    external: true
+  data:
+    name: yanoastro-allsky-data
+    driver: bridge
+    internal: true
