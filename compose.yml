@@ -45,8 +45,9 @@ services:
       - ${YANOA_ROOT:-/srv/yanoa}/data/yanoastro_allsky/migrations:/var/lib/indi-allsky
     networks:
       - data
-    security_opt:
-      - no-new-privileges:true
+    # The pinned upstream entrypoint uses sudo for two ownership checks before
+    # dropping back to the unprivileged allsky user. Keep this exception scoped
+    # to the application container; it has no host ports or host devices.
     logging:
       driver: local
       options:

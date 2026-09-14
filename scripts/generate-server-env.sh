@@ -20,6 +20,7 @@ fi
 flask_secret=$(openssl rand -hex 32)
 password_key=$(openssl rand -base64 32 | tr '+/' '-_' | tr -d '\n')
 database_password=$(openssl rand -base64 36 | tr -d '\n')
+database_root_password=$(openssl rand -hex 32)
 admin_password=${ALLSKY_ADMIN_PASSWORD:-$(openssl rand -base64 24 | tr -d '\n')}
 temporary=$(mktemp "$target_dir/server.env.XXXXXX")
 trap 'rm -f "$temporary"' EXIT HUP INT TERM
@@ -40,7 +41,7 @@ trap 'rm -f "$temporary"' EXIT HUP INT TERM
     printf 'INDIALLSKY_MARIADB_SSL=false\n'
     printf 'INDIALLSKY_MARIADB_CHARSET=utf8mb4\n'
     printf 'INDIALLSKY_MARIADB_COLLATION=utf8mb4_unicode_ci\n'
-    printf 'MARIADB_RANDOM_ROOT_PASSWORD=yes\n'
+    printf 'MARIADB_ROOT_PASSWORD=%s\n' "$database_root_password"
     printf 'MARIADB_DATABASE=indi_allsky\n'
     printf 'MARIADB_USER=indi_allsky_own\n'
     printf 'MARIADB_PASSWORD=%s\n' "$database_password"
@@ -54,4 +55,3 @@ trap - EXIT HUP INT TERM
 
 printf 'Created %s\n' "$target"
 printf 'The generated admin password is stored only in that protected file.\n'
-
