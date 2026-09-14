@@ -14,6 +14,10 @@ retired only after SyncAPI has passed an observation period.
 3. Export/redact configuration and make a restorable camera backup.
 4. Preserve the legacy 5.3 GB server archive with a checksum manifest.
 
+The file-level camera rollback archive is created with
+`scripts/backup-legacy-camera.sh`. It contains credentials and must remain in
+protected backup storage; it must never be committed to Git.
+
 ## Phase 1 — remote server
 
 1. Vendor or reproducibly fetch the exact tested upstream tag.
