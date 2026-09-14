@@ -24,7 +24,9 @@ systemctl list-unit-files --no-pager >"$metadata_dir/systemd-unit-files.txt"
 systemctl list-timers --all --no-pager >"$metadata_dir/systemd-timers.txt"
 crontab -l >"$metadata_dir/user-crontab.txt" 2>/dev/null || true
 findmnt -rn -o SOURCE,TARGET,FSTYPE,OPTIONS >"$metadata_dir/mounts.txt"
-lsblk -o NAME,SIZE,FSTYPE,UUID,MOUNTPOINTS >"$metadata_dir/block-devices.txt"
+if ! lsblk -o NAME,SIZE,FSTYPE,UUID,MOUNTPOINTS >"$metadata_dir/block-devices.txt" 2>/dev/null; then
+    lsblk -o NAME,SIZE,FSTYPE,UUID,MOUNTPOINT >"$metadata_dir/block-devices.txt"
+fi
 
 if git -C /home/smeets/allsky rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     git -C /home/smeets/allsky status --short >"$metadata_dir/legacy-git-status.txt"
