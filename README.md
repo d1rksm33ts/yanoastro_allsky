@@ -21,7 +21,10 @@ other secret belongs in Git.
 - a separate DHCP reservation exists for its final deployment location;
 - capture is running, but publication/upload is currently stale;
 - no installation or mutation of the current camera has been performed;
-- the public server stack is not deployed yet.
+- the isolated server stack is live at <https://allsky.yanoa.be>;
+- MariaDB backups run daily and AllSky media is in the encrypted offsite scope;
+- destructive media retention remains disabled until a restore test passes;
+- the Raspberry Pi still runs the legacy capture stack pending Phase 2.
 
 See:
 
@@ -51,6 +54,16 @@ Production uses
 `/srv/yanoa/secrets/yanoastro_allsky/server.env`, never the checked-in example.
 Generate it once on the server with `scripts/generate-server-env.sh`; the
 script refuses to overwrite an existing secret file.
+
+After the first successful application start, create a dedicated SyncAPI key
+without printing it to the terminal or logs:
+
+```sh
+sudo ./scripts/generate-syncapi-key.sh
+```
+
+The protected key file is intentionally separate from the Compose environment
+and is copied to the camera only during the client migration.
 
 On the YaNoa host, `.env` is a local symlink to the non-secret
 `deploy/compose.env`. This keeps deployment paths consistent while all real

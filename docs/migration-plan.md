@@ -21,7 +21,7 @@ retired only after SyncAPI has passed an observation period.
 3. Store all state and secrets under the paths documented in architecture.
 4. connect only the web service to `yanoa-edge` and route
    `allsky.yanoa.be` from Caddy;
-5. create the admin account and dedicated SyncAPI credentials interactively;
+5. create the admin account and dedicated SyncAPI credentials;
 6. test a synthetic SyncAPI upload;
 7. add logical MariaDB backup, media backup and report-only retention.
 

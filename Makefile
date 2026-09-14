@@ -1,6 +1,6 @@
 SHELL := /bin/sh
 
-.PHONY: validate build up down status logs backup
+.PHONY: validate build up down status logs backup syncapi-key
 
 validate:
 	./scripts/validate.sh
@@ -22,3 +22,6 @@ logs:
 
 backup:
 	docker compose --profile operations run --rm backup
+
+syncapi-key:
+	./scripts/generate-syncapi-key.sh
