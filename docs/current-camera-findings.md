@@ -130,3 +130,7 @@ administration still needs the return route fixed.
 Configuration contains legacy remote credentials. Store the raw backup only in
 encrypted backup storage, never in this repository.
 
+The protected file-level rollback archive was created and verified on 14
+September 2026. A second verified copy is stored under the dedicated AllSky
+backup tree on the YaNoa server, which is already included in encrypted offsite
+backup. Temporary workstation and server transit copies were removed.

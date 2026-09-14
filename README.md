@@ -31,6 +31,7 @@ See:
 - [target architecture](docs/architecture.md)
 - [camera audit runbook](docs/camera-audit.md)
 - [migration plan](docs/migration-plan.md)
+- [camera client cutover](docs/client-cutover-runbook.md)
 
 ## Remote server stack
 
