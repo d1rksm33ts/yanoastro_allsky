@@ -52,6 +52,10 @@ Production uses
 Generate it once on the server with `scripts/generate-server-env.sh`; the
 script refuses to overwrite an existing secret file.
 
+On the YaNoa host, `.env` is a local symlink to the non-secret
+`deploy/compose.env`. This keeps deployment paths consistent while all real
+credentials remain in the protected server environment file.
+
 ## Repeat the safe audit
 
 Run the audit locally on the camera and copy the resulting archive to a secure
