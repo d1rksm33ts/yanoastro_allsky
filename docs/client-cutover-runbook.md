@@ -2,9 +2,8 @@
 
 ## Physical prerequisite
 
-Use a new 128 GB high-endurance microSD card. Write Raspberry Pi OS Lite 64-bit
-(Debian 13 / Trixie) with Raspberry Pi Imager and keep the current 32 GB card
-unchanged and labelled as the physical rollback image.
+Write Raspberry Pi OS Lite 64-bit (Debian 13 / Trixie) and keep a verified,
+compressed image of the previous 32 GB card as the physical rollback source.
 
 In Raspberry Pi Imager, preconfigure:
 
@@ -24,14 +23,15 @@ the router rather than assigning a second static address on the Pi.
 1. Boot the new card and confirm SSH, DNS, NTP and outbound HTTPS.
 2. Update Raspberry Pi OS and reboot before installing camera software.
 3. Clone this repository and its pinned `indi-allsky` submodule.
-4. Build the recommended INDI release with the upstream `misc/build_indi.sh`.
-5. Run the upstream native `setup.sh` for the Raspberry Pi HQ / IMX477 camera.
+4. Add the signed upstream indi-allsky APT repository and install the version
+   matching the pinned source tag. Do not use the deprecated source installer.
+5. Configure the Raspberry Pi HQ / IMX477 direct libcamera interface.
 6. Confirm local capture before configuring any remote synchronization.
 7. Restore the audited exposure, gain, resolution, cadence and daily-product
    settings manually; do not import legacy Allsky configuration wholesale.
-8. Restore the climate/weather and focus tools from the protected rollback
-   archive. Keep climate GPIO ownership outside indi-allsky until bench tests
-   show there is no competing controller.
+8. Install the repository-owned weather receiver and fail-safe climate service.
+   The climate service exclusively owns fan GPIO18 and heater GPIO21. Missing
+   or stale sensor data must leave the heater off.
 9. Configure SyncAPI for `https://allsky.yanoa.be/indi-allsky`, using the
    protected server key, user `dirk`, certificate verification enabled and one
    synchronized still per ten captures initially.
@@ -41,6 +41,23 @@ the router rather than assigning a second static address on the Pi.
     growth before enabling destructive retention.
 12. Move the accepted camera to its outside DHCP reservation and confirm the
     administrative WireGuard return route.
+
+## Client services
+
+Restore the existing weather-station certificate and key to
+`/etc/yanoa-weather/tls/` without committing them, then install the tracked
+services:
+
+```sh
+sudo ./scripts/install-camera-client.sh
+sudo reboot
+```
+
+The weather station is on the outside `192.168.3.x` network. During bench setup
+on `192.168.2.x`, `yanoa-climate.service` deliberately reports
+`sensor-data-unavailable` and holds both outputs at zero. After deployment it
+automatically becomes active only after receiving a weather sample newer than
+five minutes.
 
 ## Rollback
 

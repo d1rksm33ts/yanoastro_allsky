@@ -1,0 +1,29 @@
+[Unit]
+Description=YaNoAstro fail-safe camera climate control
+After=local-fs.target yanoa-weather-receiver.service yanoa-fan-pwm-setup.service
+Wants=yanoa-weather-receiver.service
+Requires=yanoa-fan-pwm-setup.service
+Before=indi-allsky.service
+
+[Service]
+Type=notify
+NotifyAccess=main
+User=smeets
+Group=smeets
+SupplementaryGroups=gpio
+ExecStartPre=+/usr/bin/pinctrl set 18 a5
+ExecStartPre=+/usr/bin/pinctrl set 21 op dl
+ExecStart=/usr/local/lib/yanoa-allsky/climate_control.py
+ExecStopPost=+/usr/bin/pinctrl set 18 op dl
+ExecStopPost=+/usr/bin/pinctrl set 21 op dl
+Restart=on-failure
+RestartSec=5
+WatchdogSec=90
+RuntimeDirectory=yanoa-climate
+RuntimeDirectoryMode=0750
+WorkingDirectory=/run/yanoa-climate
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

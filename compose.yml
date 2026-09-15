@@ -43,6 +43,8 @@ services:
     volumes:
       - ${YANOA_ROOT:-/srv/yanoa}/data/yanoastro_allsky/images:/var/www/html/allsky
       - ${YANOA_ROOT:-/srv/yanoa}/data/yanoastro_allsky/migrations:/var/lib/indi-allsky
+      # Upstream's indi_allsky logger writes to local7 through /dev/log.
+      - /dev/log:/dev/log
     networks:
       - data
     # The pinned upstream entrypoint uses sudo for two ownership checks before

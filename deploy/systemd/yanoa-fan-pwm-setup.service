@@ -1,0 +1,11 @@
+[Unit]
+Description=Initialize YaNoAstro fan hardware PWM at safe zero duty
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/lib/yanoa-allsky/setup_fan_pwm.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

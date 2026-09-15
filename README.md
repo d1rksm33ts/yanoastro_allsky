@@ -19,12 +19,15 @@ other secret belongs in Git.
 - `allsky.yanoa.be` resolves to the consolidated YaNoa server;
 - the existing Raspberry Pi was audited read-only on its current LAN;
 - a separate DHCP reservation exists for its final deployment location;
-- capture is running, but publication/upload is currently stale;
-- no installation or mutation of the current camera has been performed;
+- the Raspberry Pi runs the pinned indi-allsky APT release on 64-bit Trixie;
+- IMX477 capture and authenticated SyncAPI publication are operational;
 - the isolated server stack is live at <https://allsky.yanoa.be>;
 - MariaDB backups run daily and AllSky media is in the encrypted offsite scope;
 - destructive media retention remains disabled until a restore test passes;
-- the Raspberry Pi still runs the legacy capture stack pending Phase 2.
+- a verified compressed image and protected file-level archive preserve the
+  legacy installation for rollback;
+- climate/weather migration is implemented with fail-safe GPIO ownership and
+  is commissioned separately from image capture.
 
 See:
 
@@ -55,6 +58,15 @@ Production uses
 `/srv/yanoa/secrets/yanoastro_allsky/server.env`, never the checked-in example.
 Generate it once on the server with `scripts/generate-server-env.sh`; the
 script refuses to overwrite an existing secret file.
+
+Prepare bind-mount directories before the first Compose start:
+
+```sh
+sudo ./scripts/prepare-server-storage.sh
+```
+
+The public media root is traversable by the read-only nginx container, while
+database, migration and backup roots remain private.
 
 After the first successful application start, create a dedicated SyncAPI key
 without printing it to the terminal or logs:
