@@ -20,6 +20,10 @@ services:
       start_period: 30s
     security_opt:
       - no-new-privileges:true
+    mem_limit: 1g
+    mem_reservation: 128m
+    cpus: 1.5
+    pids_limit: 256
     logging:
       driver: local
       options:
@@ -52,6 +56,10 @@ services:
     # to the application container; it has no host ports or host devices.
     security_opt:
       - no-new-privileges:false
+    mem_limit: 1536m
+    mem_reservation: 256m
+    cpus: 2.0
+    pids_limit: 256
     logging:
       driver: local
       options:
@@ -81,6 +89,10 @@ services:
       start_period: 20s
     security_opt:
       - no-new-privileges:true
+    mem_limit: 256m
+    mem_reservation: 32m
+    cpus: 0.75
+    pids_limit: 64
     logging:
       driver: local
       options:
@@ -104,6 +116,9 @@ services:
       - data
     security_opt:
       - no-new-privileges:true
+    mem_limit: 1g
+    cpus: 1.0
+    pids_limit: 128
     logging:
       driver: local
       options:
