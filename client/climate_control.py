@@ -36,6 +36,10 @@ TELEMETRY_URL = os.environ.get(
 TELEMETRY_TOKEN_FILE = Path(
     os.environ.get("YANOA_CLIMATE_TELEMETRY_TOKEN_FILE", "/etc/yanoa-climate/telemetry.token")
 )
+WEATHER_TELEMETRY_URL = os.environ.get(
+    "YANOA_WEATHER_TELEMETRY_URL",
+    "https://telemetry.yanoa.be/weather/IZONHO45",
+)
 
 
 class HardwarePwm:
@@ -89,10 +93,28 @@ def dome_temperature() -> float | None:
     return float(lines[1].rsplit("t=", 1)[1]) / 1000
 
 
+def remote_weather() -> dict | None:
+    try:
+        request = urllib.request.Request(
+            WEATHER_TELEMETRY_URL,
+            headers={"Accept": "application/json", "User-Agent": "YaNoAstro Climate/1.0"},
+        )
+        with urllib.request.urlopen(request, timeout=5) as response:
+            payload = json.load(response)
+        metric = payload["metric"]
+        return {
+            "ambient": float(metric["temp"]),
+            "dewpoint": float(metric["dewpt"]),
+            "humidity": float(payload["humidity"]),
+        }
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return None
+
+
 def weather() -> dict | None:
     try:
         if time.time() - WEATHER_FILE.stat().st_mtime > MAX_WEATHER_AGE:
-            return None
+            return remote_weather()
         args = json.loads(WEATHER_FILE.read_text())["args"]
         return {
             "ambient": float(args["t1tem"]),
@@ -100,7 +122,7 @@ def weather() -> dict | None:
             "humidity": float(args["t1hum"]),
         }
     except (FileNotFoundError, KeyError, TypeError, ValueError, json.JSONDecodeError):
-        return None
+        return remote_weather()
 
 
 def interpolate_heater(delta: float) -> int:

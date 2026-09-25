@@ -1,6 +1,8 @@
 import importlib.util
 import unittest
 from datetime import datetime, timezone
+from io import BytesIO
+from unittest.mock import patch
 from pathlib import Path
 
 
@@ -43,6 +45,14 @@ class ClimateCalculationTests(unittest.TestCase):
         self.assertEqual(payload["metrics"]["heater_pct"], 25)
         self.assertEqual(payload["metrics"]["ambient_c"], 12.0)
         self.assertEqual(payload["attributes"]["component"], "climate-control")
+
+    def test_remote_weather_fallback_maps_central_telemetry(self):
+        response = BytesIO(b'{"humidity":81,"metric":{"temp":13.2,"dewpt":9.9}}')
+        response.__enter__ = lambda value: value
+        response.__exit__ = lambda *args: None
+        with patch.object(climate.urllib.request, "urlopen", return_value=response):
+            current = climate.remote_weather()
+        self.assertEqual(current, {"ambient": 13.2, "dewpoint": 9.9, "humidity": 81.0})
 
 
 if __name__ == "__main__":
