@@ -1,0 +1,24 @@
+[Unit]
+Description=YaNoAstro AllSky focus helper
+After=network-online.target indi-allsky.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=smeets
+Group=smeets
+SupplementaryGroups=gpio indi-allsky
+Environment=PYTHONPATH=/usr/local/lib/yanoa-allsky:/usr/lib/python3/dist-packages
+Environment=YANOA_FOCUS_TOKEN_FILE=/etc/yanoa-allsky-focus/token
+ExecStart=/var/lib/indi-allsky/venv/bin/gunicorn --bind 0.0.0.0:5050 --workers 1 --threads 4 --timeout 40 focus_service:app
+Restart=on-failure
+RestartSec=5
+RuntimeDirectory=yanoa-focus
+StateDirectory=yanoa-allsky-focus
+StateDirectoryMode=0750
+WorkingDirectory=/run/yanoa-focus
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

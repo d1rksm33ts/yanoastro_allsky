@@ -13,10 +13,21 @@ install -d -o root -g root -m 0755 /usr/local/lib/yanoa-allsky
 install -o root -g root -m 0755 "$repo_dir/client/weather_receiver.py" /usr/local/lib/yanoa-allsky/
 install -o root -g root -m 0755 "$repo_dir/client/climate_control.py" /usr/local/lib/yanoa-allsky/
 install -o root -g root -m 0755 "$repo_dir/client/setup_fan_pwm.sh" /usr/local/lib/yanoa-allsky/
+install -o root -g root -m 0644 "$repo_dir/client/focus_motor.py" /usr/local/lib/yanoa-allsky/
+install -o root -g root -m 0644 "$repo_dir/client/focus_service.py" /usr/local/lib/yanoa-allsky/
 
 install -o root -g root -m 0644 "$repo_dir/deploy/systemd/yanoa-weather-receiver.service" /etc/systemd/system/
 install -o root -g root -m 0644 "$repo_dir/deploy/systemd/yanoa-fan-pwm-setup.service" /etc/systemd/system/
 install -o root -g root -m 0644 "$repo_dir/deploy/systemd/yanoa-climate.service" /etc/systemd/system/
+install -o root -g root -m 0644 "$repo_dir/deploy/systemd/yanoa-focus.service" /etc/systemd/system/
+
+install -d -o root -g smeets -m 0750 /etc/yanoa-allsky-focus
+if [ ! -s /etc/yanoa-allsky-focus/token ]; then
+    umask 0027
+    openssl rand -hex 32 > /etc/yanoa-allsky-focus/token
+    chown root:smeets /etc/yanoa-allsky-focus/token
+    chmod 0640 /etc/yanoa-allsky-focus/token
+fi
 
 if ! grep -Eq '^dtoverlay=w1-gpio([,[:space:]]|$)' "$boot_config"; then
     printf '\ndtoverlay=w1-gpio\n' >> "$boot_config"
@@ -34,6 +45,6 @@ else
 fi
 
 systemctl daemon-reload
-systemctl enable yanoa-weather-receiver.service yanoa-fan-pwm-setup.service yanoa-climate.service
+systemctl enable yanoa-weather-receiver.service yanoa-fan-pwm-setup.service yanoa-climate.service yanoa-focus.service
 
 echo "Camera client services installed. Reboot before starting climate control."
