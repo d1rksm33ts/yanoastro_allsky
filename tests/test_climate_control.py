@@ -1,5 +1,6 @@
 import importlib.util
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -26,6 +27,22 @@ class ClimateCalculationTests(unittest.TestCase):
         self.assertGreaterEqual(heater, 25)
         self.assertGreaterEqual(fan, 28)
         self.assertEqual(status, "active")
+
+    def test_telemetry_payload_contains_control_and_weather_values(self):
+        state = {
+            "timestamp": datetime(2026, 9, 25, 8, 0, tzinfo=timezone.utc).timestamp(),
+            "status": "active",
+            "cpu_c": 43.2,
+            "dome_c": 18.5,
+            "weather": {"ambient": 12.0, "dewpoint": 9.0, "humidity": 88.0},
+            "heater_pct": 25,
+            "fan_pct": 22,
+        }
+        payload = climate.telemetry_payload(state)
+        self.assertEqual(payload["schema_version"], "allsky-climate.v1")
+        self.assertEqual(payload["metrics"]["heater_pct"], 25)
+        self.assertEqual(payload["metrics"]["ambient_c"], 12.0)
+        self.assertEqual(payload["attributes"]["component"], "climate-control")
 
 
 if __name__ == "__main__":

@@ -6,10 +6,14 @@ from __future__ import annotations
 import glob
 import json
 import os
+import queue
 import signal
 import socket
 import tempfile
+import threading
 import time
+import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 
 FAN_PIN = 18
@@ -24,6 +28,14 @@ CALIBRATION = ((0, 0.0), (5, 1.9), (10, 3.8), (15, 5.7), (20, 7.6),
                (30, 10.8), (40, 13.5), (50, 15.8), (60, 17.8), (70, 19.5),
                (80, 21.0), (90, 22.3), (100, 23.5))
 STOP = False
+PUBLISH_QUEUE: queue.Queue[dict] = queue.Queue(maxsize=1)
+TELEMETRY_URL = os.environ.get(
+    "YANOA_CLIMATE_TELEMETRY_URL",
+    "https://telemetry.yanoa.be/api/v1/devices/yanoastro-allsky/readings",
+)
+TELEMETRY_TOKEN_FILE = Path(
+    os.environ.get("YANOA_CLIMATE_TELEMETRY_TOKEN_FILE", "/etc/yanoa-climate/telemetry.token")
+)
 
 
 class HardwarePwm:
@@ -146,6 +158,67 @@ def write_state(payload: dict) -> None:
     temporary.replace(STATE_FILE)
 
 
+def telemetry_payload(state: dict) -> dict:
+    weather_data = state.get("weather") or {}
+    metrics = {
+        "status": state["status"],
+        "cpu_c": state["cpu_c"],
+        "dome_c": state["dome_c"],
+        "heater_pct": state["heater_pct"],
+        "fan_pct": state["fan_pct"],
+        "ambient_c": weather_data.get("ambient"),
+        "dewpoint_c": weather_data.get("dewpoint"),
+        "humidity_pct": weather_data.get("humidity"),
+    }
+    return {
+        "schema_version": "allsky-climate.v1",
+        "observed_at": datetime.fromtimestamp(state["timestamp"], timezone.utc).isoformat(),
+        "metrics": metrics,
+        "attributes": {"component": "climate-control"},
+    }
+
+
+def telemetry_worker() -> None:
+    try:
+        token = TELEMETRY_TOKEN_FILE.read_text().strip()
+    except OSError as exc:
+        print(f"Climate telemetry disabled: {exc}", flush=True)
+        return
+    while not STOP:
+        try:
+            state = PUBLISH_QUEUE.get(timeout=1)
+        except queue.Empty:
+            continue
+        try:
+            request = urllib.request.Request(
+                TELEMETRY_URL,
+                data=json.dumps(telemetry_payload(state)).encode(),
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                },
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=8) as response:
+                response.read()
+        except Exception as exc:
+            print(f"Climate telemetry publish failed: {exc}", flush=True)
+        finally:
+            PUBLISH_QUEUE.task_done()
+
+
+def queue_telemetry(state: dict) -> None:
+    try:
+        PUBLISH_QUEUE.put_nowait(state)
+    except queue.Full:
+        try:
+            PUBLISH_QUEUE.get_nowait()
+            PUBLISH_QUEUE.task_done()
+        except queue.Empty:
+            pass
+        PUBLISH_QUEUE.put_nowait(state)
+
+
 def main() -> None:
     global STOP
     from gpiozero import PWMOutputDevice
@@ -155,6 +228,7 @@ def main() -> None:
 
     fan = HardwarePwm()
     heater = PWMOutputDevice(HEATER_PIN, frequency=500, initial_value=0)
+    threading.Thread(target=telemetry_worker, daemon=True).start()
     notify("READY=1")
     try:
         while not STOP:
@@ -170,6 +244,7 @@ def main() -> None:
                 "heater_pct": heater_pct, "fan_pct": fan_pct,
             }
             write_state(state)
+            queue_telemetry(state)
             print(json.dumps(state, separators=(",", ":")), flush=True)
             notify("WATCHDOG=1")
             end = time.monotonic() + LOOP_SECONDS
