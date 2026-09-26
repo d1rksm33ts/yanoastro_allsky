@@ -10,7 +10,8 @@ Group=smeets
 SupplementaryGroups=gpio indi-allsky
 Environment=PYTHONPATH=/usr/local/lib/yanoa-allsky:/usr/lib/python3/dist-packages
 Environment=YANOA_FOCUS_TOKEN_FILE=/etc/yanoa-allsky-focus/token
-ExecStart=/var/lib/indi-allsky/venv/bin/gunicorn --bind 0.0.0.0:5050 --workers 1 --threads 4 --timeout 40 focus_service:app
+Environment=YANOA_FOCUS_FRAME_WAIT_SECONDS=75
+ExecStart=/var/lib/indi-allsky/venv/bin/gunicorn --bind 0.0.0.0:5050 --workers 1 --threads 4 --timeout 100 focus_service:app
 Restart=on-failure
 RestartSec=5
 RuntimeDirectory=yanoa-focus

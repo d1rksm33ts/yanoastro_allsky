@@ -25,7 +25,7 @@ TOKEN_FILE = Path(os.getenv(
     "/etc/yanoa-allsky-focus/token",
 ))
 MAX_MOVE_STEPS = int(os.getenv("YANOA_FOCUS_MAX_MOVE_STEPS", "2000"))
-FRAME_WAIT_SECONDS = float(os.getenv("YANOA_FOCUS_FRAME_WAIT_SECONDS", "15"))
+FRAME_WAIT_SECONDS = float(os.getenv("YANOA_FOCUS_FRAME_WAIT_SECONDS", "75"))
 app = Flask(__name__)
 operation_lock = threading.RLock()
 session_lock = threading.Lock()
@@ -173,10 +173,20 @@ def reset():
 @app.post("/api/focus/measure/")
 def measure():
     data = request.get_json(silent=True) or {}
+    if not operation_lock.acquire(blocking=False):
+        return jsonify({"error": "A focus operation is already running"}), 409
     try:
-        return jsonify({"status": "ok", "measurement": _measure(data.get("x"), data.get("y"))})
+        previous_mtime = IMAGE_PATH.stat().st_mtime if IMAGE_PATH.exists() else 0
+        if not _wait_for_frame(previous_mtime):
+            return jsonify({"error": "No new AllSky frame arrived in time"}), 504
+        return jsonify({
+            "status": "ok", "fresh_frame": True,
+            "measurement": _measure(data.get("x"), data.get("y")),
+        })
     except (RuntimeError, ValueError) as exc:
         return jsonify({"error": str(exc)}), 422
+    finally:
+        operation_lock.release()
 
 
 @app.post("/api/focus/move/")
